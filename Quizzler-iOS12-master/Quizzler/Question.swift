@@ -13,8 +13,8 @@ class Question {
     let questionText: String
     let answer: Bool
     
-    init(questionText: String, answer: Bool) {
-        self.questionText = questionText
-        self.answer = answer
+    init(text: String, correctAnswer: Bool) {
+        self.questionText = text
+        self.answer = correctAnswer
     }
 }
