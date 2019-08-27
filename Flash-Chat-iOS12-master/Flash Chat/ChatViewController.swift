@@ -8,11 +8,14 @@
 
 import UIKit
 import Firebase
+import SVProgressHUD
+import ChameleonFramework
 
 class ChatViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
     // Declare instance variables here
-
+    var messageArray: [Message] = [Message]()
+    
     
     // We've pre-linked the IBOutlets
     @IBOutlet var heightConstraint: NSLayoutConstraint!
@@ -44,6 +47,10 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         configureTableView()
         
+        retreiveMessages()
+        
+        // Removendo as linhas que separam as celulas da tableView
+        messageTableView.separatorStyle = .none
     }
 
     ///////////////////////////////////////////
@@ -57,9 +64,20 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "customMessageCell", for: indexPath) as! CustomMessageCell
         
-        let messageArray = ["First", "Second", "Third"]
+        cell.messageBody.text = messageArray[indexPath.row].messageBody
+        cell.senderUsername.text = messageArray[indexPath.row].sender
+        cell.avatarImageView.image = UIImage(named: "egg")
         
-        cell.messageBody.text = messageArray[indexPath.row]
+        if cell.senderUsername.text == Auth.auth().currentUser?.email as String? {
+            // se o próprio usuario estiver mandando a mensagem
+            cell.avatarImageView.backgroundColor = UIColor.flatMint()
+            cell.messageBackground.backgroundColor = UIColor.flatSkyBlue()
+        } else {
+            // se outro usuario tiver mandando a mensagem
+            cell.avatarImageView.backgroundColor = UIColor.flatWatermelon()
+            cell.messageBackground.backgroundColor = UIColor.flatGray()
+        }
+        
         
         return cell
     }
@@ -67,7 +85,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //DONE: Declare numberOfRowsInSection here:
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        return messageArray.count
     }
     
     
@@ -148,7 +166,25 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     //TODO: Create the retrieveMessages method here:
-    
+    func retreiveMessages() {
+        let messageDB = Database.database().reference().child("Messages")
+        
+        messageDB.observe(.childAdded) { (snapshot) in
+            let snapshotValue = snapshot.value as! Dictionary<String,String>
+            
+            if let text = snapshotValue["MessageBody"] , let sender = snapshotValue["Sender"]{
+                print(sender, text)
+                let message = Message()
+                message.sender = sender
+                message.messageBody = text
+                
+                self.messageArray.append(message)
+                
+                self.configureTableView()
+                self.messageTableView.reloadData()
+            }
+        }
+    }
     
 
     
